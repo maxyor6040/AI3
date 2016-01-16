@@ -57,7 +57,6 @@ if __name__ == '__main__':
     for k in range(0, len(noisy_folds)):
         learn_group_x = get_union_of_all_but_i(noisy_folds, k)
         learn_group_y = []
-        print("size: {}".format(len(learn_group_x)))
         for l in learn_group_x:
             learn_group_y.append(l.pop())
 
@@ -67,7 +66,11 @@ if __name__ == '__main__':
         for m in folds[k]:
             ans = m.pop()
             tree_ans = curr_tree.predict([m])
+            m.append(ans)
             if ans == tree_ans:
                 num_of_success += 1
+
+        for l in learn_group_x:
+            l.append(learn_group_y.pop(0))
 
         print('fold num: {} | acc: {}'.format(k, num_of_success / (float(len(folds[k])))))
