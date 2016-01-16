@@ -1,7 +1,10 @@
+import pickle
+
 from sklearn.cross_validation import cross_val_score
 from sklearn.tree import DecisionTreeClassifier
 
 import get_features
+import noise
 
 
 def current_sample_labeled_ad(list_line):
@@ -32,11 +35,39 @@ def extract_data_from_ads():
     return x_val, y_val
 
 
+def get_union_of_all_but_i(list_of_lists, index):
+    res = []
+    for j in range(0, len(list_of_lists)):
+        if j != index:
+            res.extend(list_of_lists[j])
+    return res
+
+
 if __name__ == '__main__':
-
-    """iris = load_iris()
-    cross_val_score(clf, iris.data, iris.target, cv=10)"""
     x, y = extract_data_from_ads()
-    clf = DecisionTreeClassifier().fit(x, y)
-    print(clf.predict([x[1]]))
+    x_temp = x.copy()
 
+    for i in range(0, len(x_temp)):
+        x_temp[i].append(y[i])
+
+    noisy_folds, folds = noise.get_noisy_folds(x_temp)
+
+    clf = DecisionTreeClassifier(criterion='entropy', splitter='best', min_samples_split=49)
+
+    for k in range(0, len(noisy_folds)):
+        learn_group_x = get_union_of_all_but_i(noisy_folds, k)
+        learn_group_y = []
+        print("size: {}".format(len(learn_group_x)))
+        for l in learn_group_x:
+            learn_group_y.append(l.pop())
+
+        curr_tree = clf.fit(learn_group_x, learn_group_y)
+
+        num_of_success = 0
+        for m in folds[k]:
+            ans = m.pop()
+            tree_ans = curr_tree.predict([m])
+            if ans == tree_ans:
+                num_of_success += 1
+
+        print('fold num: {} | acc: {}'.format(k, num_of_success / (float(len(folds[k])))))
