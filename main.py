@@ -47,8 +47,8 @@ def get_union_of_all_but_i(list_of_lists, index):
     return res
 
 
-def get_subset_indices(group, p=0.2):
-    return random.sample(range(len(group)), math.floor(0.2 * len(group)))
+def get_subset_indices(group, p=0.5):
+    return random.sample(range(len(group)), math.floor(p * len(group)))
 
 
 def committee_predict(current_committee, example):
@@ -110,13 +110,17 @@ def calculate_semi_random_committee(noisy_fold_semi, fold_semi, features, commit
 def all_semi_random_sub_examples(noisy_fold_semi, fold_semi, features):
     sizes = [1, 3, 5, 7, 9, 11]
     for size in sizes:
-        indices = get_subset_indices(noisy_fold_semi)
+        indices = get_subset_indices(noisy_fold_semi[0])
         noisy_fold_semi_subset = []
         fold_semi_subset = []
-        for index in indices:
-            noisy_fold_semi_subset.append(noisy_fold_semi[index])
-            fold_semi_subset.append(fold_semi[index])
+        for _ in range(0, len(noisy_fold_semi)):
+            noisy_fold_semi_subset.append([])
+            fold_semi_subset.append([])
 
+        for noisy_vec_num in range(0, len(noisy_fold_semi)):
+            for index in indices:
+                noisy_fold_semi_subset[noisy_vec_num].append(noisy_fold_semi[noisy_vec_num][index])
+                fold_semi_subset[noisy_vec_num].append(fold_semi[noisy_vec_num][index])
         calculate_semi_random_committee(noisy_fold_semi_subset, fold_semi_subset, features, size, 'examples')
 
 
@@ -137,6 +141,6 @@ if __name__ == '__main__':
     '''end of part'''
 
     '''Arye'''
-    all_semi_random_sub_features(noisy_folds, folds, [i for i in range(0, len(x[0]) - 1)])
+    #all_semi_random_sub_features(noisy_folds, folds, [i for i in range(0, len(x[0]) - 1)])
     '''Max'''
     all_semi_random_sub_examples(noisy_folds, folds, [i for i in range(0, len(x[0]) - 1)])
