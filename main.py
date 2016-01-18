@@ -110,7 +110,7 @@ def calculate_semi_random_committee(noisy_fold_semi, fold_semi, features, commit
 def all_semi_random_sub_examples(noisy_fold_semi, fold_semi, features):
     sizes = [1, 3, 5, 7, 9, 11]
     for size in sizes:
-        indices = get_subset_indices(features)
+        indices = get_subset_indices(noisy_fold_semi)
         noisy_fold_semi_subset = []
         fold_semi_subset = []
         for index in indices:
@@ -123,11 +123,8 @@ def all_semi_random_sub_examples(noisy_fold_semi, fold_semi, features):
 def all_semi_random_sub_features(noisy_fold_semi, fold_semi, features):
     sizes = [1, 3, 5, 7, 9, 11]
     for size in sizes:
-        indices = get_subset_indices(features)
-        feat_sub_set = []
-        for index in indices:
-            feat_sub_set.append(features[index])
-        calculate_semi_random_committee(noisy_fold_semi, fold_semi, feat_sub_set, size, 'features')
+        sub_indices = get_subset_indices(features)
+        calculate_semi_random_committee(noisy_fold_semi, fold_semi, sub_indices, size, 'features')
 
 
 if __name__ == '__main__':
@@ -137,10 +134,9 @@ if __name__ == '__main__':
     for i in range(0, len(x_temp)):
         x_temp[i].append(y[i])
     noisy_folds, folds = noise.get_noisy_folds(x_temp)
-    indices = get_features.get_ads_features(317390805, 317390789)
     '''end of part'''
 
     '''Arye'''
-    all_semi_random_sub_features(noisy_folds, folds, indices)
+    all_semi_random_sub_features(noisy_folds, folds, [i for i in range(0, len(x[0]) - 1)])
     '''Max'''
-    all_semi_random_sub_examples(noisy_folds, folds, indices)
+    all_semi_random_sub_examples(noisy_folds, folds, [i for i in range(0, len(x[0]) - 1)])
