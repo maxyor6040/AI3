@@ -102,7 +102,7 @@ def aux(features, examples, m=49, epsilon=0.0000001):
     l = aux(features, left_examples)
     r = aux(features, right_examples)
     res = Node(l, r, chosen_feature)
-    features.append(chosen_feature)  # TODO Arye that's probably unnecessary
+    features.append(chosen_feature)
     return res
 
 
