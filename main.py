@@ -1,7 +1,11 @@
+import copy
 import pickle
+import random
 
+import math
 from sklearn.cross_validation import cross_val_score
 from sklearn.tree import DecisionTreeClassifier
+import semi_random
 
 import get_features
 import noise
@@ -43,15 +47,10 @@ def get_union_of_all_but_i(list_of_lists, index):
     return res
 
 
-if __name__ == '__main__':
-    x, y = extract_data_from_ads()
-    x_temp = x.copy()
-
+def calculate_single_tree(x, y):
     for i in range(0, len(x_temp)):
         x_temp[i].append(y[i])
-
     noisy_folds, folds = noise.get_noisy_folds(x_temp)
-
     clf = DecisionTreeClassifier(criterion='entropy', splitter='best', min_samples_split=49)
 
     for k in range(0, len(noisy_folds)):
@@ -74,3 +73,24 @@ if __name__ == '__main__':
             l.append(learn_group_y.pop(0))
 
         print('fold num: {} | acc: {}'.format(k, num_of_success / (float(len(folds[k])))))
+
+
+def get_subset(examples, p=0.2):
+    random_indices = random.sample(range(len(examples)), math.floor(0.2 * len(examples)))
+    subset_examples = []
+    for index in random_indices:
+        subset_examples.append(examples[index])
+    return subset_examples
+
+
+if __name__ == '__main__':
+    x, y = extract_data_from_ads()
+    x_temp = copy.deepcopy(x)
+    for i in range(0, len(x_temp)):
+        x_temp[i].append(y[i])
+
+    subset = get_subset(x_temp)
+    '''
+
+    semi_random_tree = semi_random.semi_random_id3(x_temp)
+    '''
