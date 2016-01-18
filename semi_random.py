@@ -106,5 +106,5 @@ def aux(features, examples, m=49, epsilon=0.0000001):
     return res
 
 
-def semi_random_id3(examples):
-    return aux([i for i in range(0, len(examples[0]) - 1)], examples)
+def semi_random_id3(features, examples):
+    return aux(features, examples)
