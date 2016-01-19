@@ -1,6 +1,9 @@
+import bisect
 import copy
 import random
 from math import log
+
+import itertools
 
 
 class Node:
@@ -47,17 +50,10 @@ def entropy(examples):
     return - (prob_pos * log(prob_pos) + prob_neg * log(prob_neg))
 
 
-def weighted_choice(choices):
-    total = sum(w for c, w in choices.items())
-    r = random.uniform(0, total)
-    upto = 0
-    for c, w in choices.items():
-        if upto + w >= r:
-            return c
-        upto += w
-    print("ein kaze mila")
-    assert False
-    return choices.keys()[0]
+def weighted_choice(features, info_gain):
+    cumdist = list(itertools.accumulate(info_gain))
+    x = random.random() * cumdist[-1]
+    return features[bisect.bisect(cumdist, x)]
 
 
 def information_gain(feature, examples):
@@ -78,9 +74,9 @@ def calc_res(examples):
     return Node(result=False)
 
 
-def aux(features, examples, m=49, epsilon=0.0000001):
+def aux(features, examples, m=49, epsilon=0.001):
     pos_count = positive_examples_count(examples)
-    if len(examples) <= 49:
+    if len(examples) <= m:
         return calc_res(examples)
 
     if pos_count == len(examples):
@@ -90,8 +86,10 @@ def aux(features, examples, m=49, epsilon=0.0000001):
     if len(features) == 0:
         return calc_res(examples)
 
-    map_of_weights = {feat: information_gain(feat, examples) + epsilon for feat in features}
-    chosen_feature = weighted_choice(map_of_weights)
+    # map_of_weights = {feat: information_gain(feat, examples) + epsilon for feat in features}
+    # chosen_feature = weighted_choice(map_of_weights)
+    info_gain_list = [information_gain(feat, examples) + epsilon for feat in features]
+    chosen_feature = weighted_choice(features, info_gain_list)
 
     left_examples = [e for e in examples if e[chosen_feature] == '1']
     right_examples = [e for e in examples if e[chosen_feature] != '1']

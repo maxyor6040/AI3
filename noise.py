@@ -13,7 +13,7 @@ def switch_cls(given, couple):
     return couple[0]
     
 
-def split_to_folds(seq, num=3):
+def split_to_folds(seq, num=2):
     seq = list(seq)
     random.shuffle(seq)
     avg = len(seq) / float(num)

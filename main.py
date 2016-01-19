@@ -3,12 +3,18 @@ import pickle
 import random
 
 import math
+import threading
+
 from sklearn.cross_validation import cross_val_score
 from sklearn.tree import DecisionTreeClassifier
+from zmq.auth import thread
+
 import semi_random
 
 import get_features
 import noise
+
+sizes = [1, 3, 5, 7, 9, 11]
 
 
 def current_sample_labeled_ad(list_line):
@@ -47,8 +53,33 @@ def get_union_of_all_but_i(list_of_lists, index):
     return res
 
 
-def get_subset_indices(group, p=0.5):
-    return random.sample(range(len(group)), math.floor(p * len(group)))
+def get_subset_indices(group, p=0.2):
+    return random.sample(range(len(group)), math.ceil(p * len(group)))
+
+
+def get_sub_group_of_examples(all_examples):
+    '''
+    indices = get_subset_indices(noisy_folds_full[0])
+    noisy_fold_semi_subset = []
+    fold_semi_subset = []
+    for _ in range(0, len(noisy_folds_full)):
+        noisy_fold_semi_subset.append([])
+        fold_semi_subset.append([])
+
+    for noisy_vec_num in range(0, len(noisy_folds_full)):
+        for index in indices:
+            noisy_fold_semi_subset[noisy_vec_num].append(noisy_folds_full[noisy_vec_num][index])
+            fold_semi_subset[noisy_vec_num].append(folds_full[noisy_vec_num][index])
+
+    return noisy_fold_semi_subset, fold_semi_subset
+    '''
+
+    indices = get_subset_indices(all_examples)
+    subset = []
+    for curr_i in indices:
+        subset.append(all_examples[curr_i])
+
+    return subset
 
 
 def committee_predict(current_committee, example):
@@ -88,14 +119,21 @@ def calculate_single_tree(noisy_fold_single_tree, folds_single_tree):
     print('single tree. acc: {}'.format(k, accuracy))
 
 
-def calculate_semi_random_committee(noisy_fold_semi, fold_semi, features, committee_size, subset_str):
+def calculate_semi_random_committee(noisy_fold_semi, fold_semi, features, committee_size, is_subset_of_examples):
     accuracy = 0.0
     for k in range(0, len(noisy_fold_semi)):
         learn_group_x = get_union_of_all_but_i(noisy_fold_semi, k)
 
         committee = []
         for _ in range(0, committee_size):
-            committee.append(semi_random.semi_random_id3(features, learn_group_x))
+            curr_examples = learn_group_x
+            curr_feats = features
+            if is_subset_of_examples:
+                curr_examples = get_sub_group_of_examples(learn_group_x)
+            else:
+                curr_feats = get_subset_indices(features)
+
+            committee.append(semi_random.semi_random_id3(curr_feats, curr_examples))
 
         current_accuracy = 0
         for m in fold_semi[k]:
@@ -104,31 +142,18 @@ def calculate_semi_random_committee(noisy_fold_semi, fold_semi, features, commit
         current_accuracy /= float(len(fold_semi[k]))
         accuracy += current_accuracy
     accuracy /= float(len(noisy_fold_semi))
-    print('committee semi-random: subset:{} | size: {} | acc: {}'.format(subset_str, committee_size, accuracy))
+    print('committee semi-random: subset:{} | size: {} | acc: {}'.format(
+            'examples' if is_subset_of_examples else 'features', committee_size, accuracy))
 
 
 def all_semi_random_sub_examples(noisy_fold_semi, fold_semi, features):
-    sizes = [1, 3, 5, 7, 9, 11]
     for size in sizes:
-        indices = get_subset_indices(noisy_fold_semi[0])
-        noisy_fold_semi_subset = []
-        fold_semi_subset = []
-        for _ in range(0, len(noisy_fold_semi)):
-            noisy_fold_semi_subset.append([])
-            fold_semi_subset.append([])
-
-        for noisy_vec_num in range(0, len(noisy_fold_semi)):
-            for index in indices:
-                noisy_fold_semi_subset[noisy_vec_num].append(noisy_fold_semi[noisy_vec_num][index])
-                fold_semi_subset[noisy_vec_num].append(fold_semi[noisy_vec_num][index])
-        calculate_semi_random_committee(noisy_fold_semi_subset, fold_semi_subset, features, size, 'examples')
+        calculate_semi_random_committee(noisy_fold_semi, fold_semi, features, size, True)
 
 
 def all_semi_random_sub_features(noisy_fold_semi, fold_semi, features):
-    sizes = [1, 3, 5, 7, 9, 11]
     for size in sizes:
-        sub_indices = get_subset_indices(features)
-        calculate_semi_random_committee(noisy_fold_semi, fold_semi, sub_indices, size, 'features')
+        calculate_semi_random_committee(noisy_fold_semi, fold_semi, features, size, False)
 
 
 if __name__ == '__main__':
@@ -141,6 +166,6 @@ if __name__ == '__main__':
     '''end of part'''
 
     '''Arye'''
-    #all_semi_random_sub_features(noisy_folds, folds, [i for i in range(0, len(x[0]) - 1)])
+    all_semi_random_sub_features(noisy_folds, folds, [i for i in range(0, len(x[0]) - 1)])
     '''Max'''
     all_semi_random_sub_examples(noisy_folds, folds, [i for i in range(0, len(x[0]) - 1)])
