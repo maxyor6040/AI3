@@ -20,7 +20,7 @@ class Node:
     def predict(self, example):
         if self.result is not None:
             return self.result
-        if example[self.feature] == 1:
+        if example[self.feature] == '1':
             return self.l.predict(example)
         else:
             return self.r.predict(example)
